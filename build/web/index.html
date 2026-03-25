@@ -415,6 +415,30 @@ frameborder="1"
     if (typeof window.MM === 'undefined') window.MM = {};
     window.MM.UME = true;
 
+    // Intercept AudioContext creation so we can resume it on the first user gesture.
+    // Browsers suspend the AudioContext until a gesture; SDL2/Emscripten creates it
+    // during init. We capture it via Proxy and resume() on click/key/touch.
+    (function() {
+        var _OrigAC = window.AudioContext || window.webkitAudioContext;
+        if (!_OrigAC) return;
+        var _ac = null;
+        var _Proxied = new Proxy(_OrigAC, {
+            construct: function(target, args) {
+                var instance = Reflect.construct(target, args);
+                if (!_ac) _ac = instance;
+                return instance;
+            }
+        });
+        if (window.AudioContext)       window.AudioContext       = _Proxied;
+        if (window.webkitAudioContext) window.webkitAudioContext = _Proxied;
+        function _resume() {
+            if (_ac && _ac.state !== 'running') _ac.resume().catch(function(){});
+        }
+        ['pointerdown','keydown','touchstart'].forEach(function(t) {
+            document.addEventListener(t, _resume);
+        });
+    })();
+
     // Desktop 4:3 centering — runs AFTER pygbag sets canvas inline styles
     function applyDesktop43() {
         if (_isMobile) return;
