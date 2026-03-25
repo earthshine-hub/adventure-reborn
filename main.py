@@ -892,7 +892,7 @@ _FREQS = {
     'G5':783.99,'Ab5':830.61,'A5':880.00,'Bb5':932.33,'B5':987.77,
 }
 
-def _note_buf(freq, dur, sr=22050, vol=0.22):
+def _note_buf(freq, dur, sr=11025, vol=0.22):
     n   = int(sr * dur)
     rel = max(1, min(int(sr * 0.06), n))
     buf = [0.0] * n
@@ -902,7 +902,7 @@ def _note_buf(freq, dur, sr=22050, vol=0.22):
         buf[i] = vol * env * math.sin(2 * math.pi * freq * t)
     return buf
 
-def _thump_buf(freq, dur, sr=22050, vol=0.55):
+def _thump_buf(freq, dur, sr=11025, vol=0.55):
     """Short punchy bass thump with exponential decay and mild 2nd harmonic."""
     n = int(sr * dur)
     buf = [0.0] * n
@@ -919,7 +919,7 @@ def _mix_into(dst, src, pos):
         if idx < len(dst):
             dst[idx] += s
 
-async def make_music_async(sr=22050):
+async def make_music_async(sr=11025):
     """Generate Bach Minuet in G asynchronously — 24 bars."""
     try:
         beat = 0.50
@@ -991,29 +991,29 @@ async def make_music_async(sr=22050):
         mix = [0.0] * total_samples
 
         pos = 0
-        for note, beats in MELODY:
+        for idx, (note, beats) in enumerate(MELODY):
             dur = beats * beat
             _mix_into(mix, _note_buf(_FREQS[note], dur, sr, vol=0.28), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
         pos = 0
-        for note, beats in BASS:
+        for idx, (note, beats) in enumerate(BASS):
             dur = beats * beat
             _mix_into(mix, _note_buf(_FREQS[note], dur, sr, vol=0.14), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
-        buf = array.array('h', [0] * total_samples)
-        for i, s in enumerate(mix):
-            buf[i] = max(-32767, min(32767, int(s * 32767)))
+        buf = array.array('h', [max(-32767, min(32767, int(s * 32767))) for s in mix])
         return pygame.mixer.Sound(buffer=buf)
     except Exception as e:
         print("Music gen failed:", e)
         return None
 
 
-async def make_gameplay_music_async(sr=22050):
+async def make_gameplay_music_async(sr=11025):
     """Generate ominous Space Invaders-style bass thump loop."""
     try:
         # 4 descending bass thumps with rests — slow and menacing
@@ -1035,23 +1035,22 @@ async def make_gameplay_music_async(sr=22050):
         mix = [0.0] * total_samples
 
         pos = 0
-        for freq_key, dur in PATTERN:
+        for idx, (freq_key, dur) in enumerate(PATTERN):
             n = int(dur * sr)
             if freq_key is not None:
                 _mix_into(mix, _thump_buf(_FREQS[freq_key], dur, sr, vol=0.60), pos)
             pos += n
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
-        buf = array.array('h', [0] * total_samples)
-        for i, s in enumerate(mix):
-            buf[i] = max(-32767, min(32767, int(s * 32767)))
+        buf = array.array('h', [max(-32767, min(32767, int(s * 32767))) for s in mix])
         return pygame.mixer.Sound(buffer=buf)
     except Exception as e:
         print("Gameplay music gen failed:", e)
         return None
 
 
-async def make_boss_music_async(sr=22050):
+async def make_boss_music_async(sr=11025):
     """Scary, fast, frenetic boss battle music — rapid minor/tritone runs."""
     try:
         beat = 0.09  # very fast (~667 BPM per 16th note)
@@ -1087,29 +1086,29 @@ async def make_boss_music_async(sr=22050):
         mix = [0.0] * total_samples
 
         pos = 0
-        for note, beats in MELODY:
+        for idx, (note, beats) in enumerate(MELODY):
             dur = beats * beat
             _mix_into(mix, _note_buf(_FREQS[note], dur * 0.85, sr, vol=0.32), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
         pos = 0
-        for note, beats in BASS:
+        for idx, (note, beats) in enumerate(BASS):
             dur = beats * beat
             _mix_into(mix, _thump_buf(_FREQS[note], dur * 0.70, sr, vol=0.50), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
-        buf = array.array('h', [0] * total_samples)
-        for i, s in enumerate(mix):
-            buf[i] = max(-32767, min(32767, int(s * 32767)))
+        buf = array.array('h', [max(-32767, min(32767, int(s * 32767))) for s in mix])
         return pygame.mixer.Sound(buffer=buf)
     except Exception as e:
         print("Boss music gen failed:", e)
         return None
 
 
-async def make_victory_music_async(sr=22050):
+async def make_victory_music_async(sr=11025):
     """Soaring triumphant victory fanfare."""
     try:
         beat = 0.28  # exciting, march-like
@@ -1148,22 +1147,22 @@ async def make_victory_music_async(sr=22050):
         mix = [0.0] * total_samples
 
         pos = 0
-        for note, beats in MELODY:
+        for idx, (note, beats) in enumerate(MELODY):
             dur = beats * beat
             _mix_into(mix, _note_buf(_FREQS[note], dur, sr, vol=0.35), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
         pos = 0
-        for note, beats in BASS:
+        for idx, (note, beats) in enumerate(BASS):
             dur = beats * beat
             _mix_into(mix, _note_buf(_FREQS[note], dur, sr, vol=0.18), pos)
             pos += int(dur * sr)
-            await asyncio.sleep(0)
+            if idx % 4 == 3:
+                await asyncio.sleep(0)
 
-        buf = array.array('h', [0] * total_samples)
-        for i, s in enumerate(mix):
-            buf[i] = max(-32767, min(32767, int(s * 32767)))
+        buf = array.array('h', [max(-32767, min(32767, int(s * 32767))) for s in mix])
         return pygame.mixer.Sound(buffer=buf)
     except Exception as e:
         print("Victory music gen failed:", e)
@@ -1318,7 +1317,7 @@ def _make_chord(freqs, duration=0.18, vol=0.3, sample_rate=22050):
 
 def init_sounds():
     try:
-        pygame.mixer.pre_init(22050, -16, 1, 512)
+        pygame.mixer.pre_init(11025, -16, 1, 512)
         pygame.mixer.init()
     except Exception:
         pass
@@ -1433,6 +1432,19 @@ def _is_portrait():
     except Exception:
         return False
 
+_TOUCH_DEVICE = None
+def _is_touch_device():
+    """Return True if device has a touch screen (mobile). Cached after first call."""
+    global _TOUCH_DEVICE
+    if _TOUCH_DEVICE is None:
+        try:
+            import platform as _plt
+            mtp = getattr(_plt.window.navigator, 'maxTouchPoints', 0)
+            _TOUCH_DEVICE = int(mtp) > 0
+        except Exception:
+            _TOUCH_DEVICE = False
+    return _TOUCH_DEVICE
+
 
 class TouchDpad:
     BTN = 80   # large tap target — fat-finger friendly
@@ -1510,6 +1522,8 @@ class TouchDpad:
         return (PLAYER_SPEED if "down" in dirs else 0) - (PLAYER_SPEED if "up" in dirs else 0)
 
     def draw(self, surface):
+        if not _is_touch_device():
+            return
         active = set(self._finger_dirs.values()) | self._mouse_dirs
         arrows = {"up": "^", "down": "v", "left": "<", "right": ">"}
         for name, rect in self.dir_rects.items():
