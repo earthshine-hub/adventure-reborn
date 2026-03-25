@@ -149,7 +149,7 @@ config = {
     user_canvas : 0,
     user_canvas_managed : 0,
     gui_divider : 2,
-    ume_block : 1,
+    ume_block : 0,
     can_close : 0,
     archive : "game",
     gui_debug : 2,
@@ -409,6 +409,11 @@ frameborder="1"
     updatePortraitMode();
 
     var _isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
+    // Skip pygbag's "Ready to start" UME gate — the game's own start screen
+    // acts as the user-gesture unlock for the Web Audio context instead.
+    if (typeof window.MM === 'undefined') window.MM = {};
+    window.MM.UME = true;
 
     // Desktop 4:3 centering — runs AFTER pygbag sets canvas inline styles
     function applyDesktop43() {
