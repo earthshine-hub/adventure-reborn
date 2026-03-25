@@ -221,25 +221,29 @@ function show_infobox() {
         canvas.emscripten {
             border: 0px none;
             background-color: black;
-            object-fit: contain;
             touch-action: none;
-            z-index: 5;
-            padding: 0;
-            margin: 0;
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+            z-index: 5;
+            padding: 0;
+            margin: 0 auto;
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
         }
 
-        /* ── Portrait mobile: rotate canvas -90° so landscape game fills portrait screen ── */
+        /* Portrait mobile: rotate canvas so landscape game fills portrait screen */
         @media screen and (orientation: portrait) {
+            html, body { overflow: hidden; }
             canvas.emscripten {
                 width: 100vh !important;
                 height: 100vw !important;
-                top: calc(50% - 50vw) !important;
-                left: calc(50% - 50vh) !important;
+                top: calc(50vh - 50vw) !important;
+                left: calc(50vw - 50vh) !important;
+                bottom: auto !important;
+                right: auto !important;
                 transform: rotate(-90deg);
                 transform-origin: center center;
             }
@@ -250,9 +254,6 @@ function show_infobox() {
             margin: 0;
             padding: 0;
             background-color: black;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
         }
 
         .topright{
