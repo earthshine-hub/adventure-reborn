@@ -1172,7 +1172,7 @@ async def make_victory_music_async(sr=22050):
 
 
 # ── Start screen ──────────────────────────────────────────────────────────────
-def draw_start_screen(surface, font_xl, font_title, font_s, frame, audio_triggered=False, play_delay=0):
+def draw_start_screen(surface, font_xl, font_title, font_s, frame):
     # Sky
     surface.fill((18, 12, 45))
 
@@ -1288,18 +1288,9 @@ def draw_start_screen(surface, font_xl, font_title, font_s, frame, audio_trigger
     sub = font_title.render("A Quest for the Golden Chalice", True, (190, 165, 110))
     surface.blit(sub, (SCREEN_W // 2 - sub.get_width() // 2, ty + 22))
 
-    # Blinking prompt — phase 1: unlock audio / phase 2: start game
+    # Blinking prompt
     if (frame // 28) % 2 == 0:
-        if not audio_triggered:
-            msg = "Press any key to begin"
-            col = (220, 210, 180)
-        elif play_delay < 60:
-            msg = "Starting..."
-            col = (160, 220, 160)
-        else:
-            msg = "Press any key to play"
-            col = (160, 220, 160)
-        prompt = font_s.render(msg, True, col)
+        prompt = font_s.render("Press any key to begin", True, (220, 210, 180))
         surface.blit(prompt, (SCREEN_W // 2 - prompt.get_width() // 2, ty + 44))
 
 
@@ -1693,8 +1684,7 @@ async def main():
     # Game state: "start" | "playing" | "inventory" | "dialogue" | "win" | "gameover"
     state = "start"
     frame = 0
-    start_audio_triggered = False  # True after first user gesture (unlocks Web Audio)
-    start_play_delay = 0           # frames elapsed since audio triggered; gameplay after 60
+    start_input_delay = 0          # frames elapsed on start screen; ignore input for first 60
     music_sound = None          # start screen music
     music_task = None           # asyncio Future for start music generation
     gameplay_music_sound = None # in-game ominous bass loop
@@ -1722,18 +1712,11 @@ async def main():
             dpad.handle_event(event)
 
             if state == "start":
-                interacted = (event.type == pygame.KEYDOWN
-                              or event.type == pygame.MOUSEBUTTONDOWN
-                              or event.type == pygame.FINGERDOWN)
-                if interacted:
-                    if not start_audio_triggered:
-                        # First gesture: unlock Web Audio + play music; stay on start screen
-                        start_audio_triggered = True
-                        if music_sound:
-                            music_sound.set_volume(0.25)
-                            music_sound.play(-1)
-                    elif start_play_delay >= 60:
-                        # Second gesture after 1 s: start gameplay
+                if start_input_delay >= 60:
+                    interacted = (event.type == pygame.KEYDOWN
+                                  or event.type == pygame.MOUSEBUTTONDOWN
+                                  or event.type == pygame.FINGERDOWN)
+                    if interacted:
                         if music_sound: music_sound.stop()
                         state = "playing"
                         gameplay_music_started = False
@@ -1748,9 +1731,7 @@ async def main():
                     if victory_music_sound: victory_music_sound.stop()
                     gameplay_music_started = boss_music_started = victory_music_started = False
                     win_flash_timer = 0
-                    # Audio already unlocked — play start music immediately and skip phase 1
-                    start_audio_triggered = True
-                    start_play_delay = 0
+                    start_input_delay = 0
                     if music_sound:
                         music_sound.set_volume(0.25)
                         music_sound.play(-1)
@@ -1821,19 +1802,17 @@ async def main():
 
         # ── Non-playing states: just draw ─────────────────────────
         if state == "start":
-            if start_audio_triggered:
-                start_play_delay += 1
+            start_input_delay += 1
             # Kick off all music generation on first frame
             if music_task is None:
                 music_task         = asyncio.ensure_future(make_music_async())
                 gameplay_music_task= asyncio.ensure_future(make_gameplay_music_async())
                 boss_music_task    = asyncio.ensure_future(make_boss_music_async())
                 victory_music_task = asyncio.ensure_future(make_victory_music_async())
-            # Load music result when ready
+            # Auto-play music as soon as it's generated
             if music_task.done() and music_sound is None:
                 music_sound = music_task.result()
-                # Play only if user already triggered (audio context already unlocked)
-                if music_sound and start_audio_triggered:
+                if music_sound:
                     music_sound.set_volume(0.25)
                     music_sound.play(-1)
             # Pre-load other music results as they finish
@@ -1843,7 +1822,7 @@ async def main():
                 boss_music_sound = boss_music_task.result()
             if victory_music_task is not None and victory_music_task.done() and victory_music_sound is None:
                 victory_music_sound = victory_music_task.result()
-            draw_start_screen(screen, font_xl, font_title, font_s, frame, start_audio_triggered, start_play_delay)
+            draw_start_screen(screen, font_xl, font_title, font_s, frame)
             pygame.display.flip()
             await asyncio.sleep(0)
             continue
