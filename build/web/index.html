@@ -218,8 +218,6 @@ function show_infobox() {
         div.thick_border { border: 4px solid black; }
 
         /* the canvas *must not* have any border or padding, or mouse coords will be wrong */
-
-        /* ── Landscape / desktop: scale 16:9 to fill, centred ── */
         canvas.emscripten {
             border: 0px none;
             background-color: black;
@@ -227,24 +225,23 @@ function show_infobox() {
             touch-action: none;
             z-index: 5;
             padding: 0;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 100vw;
-            height: 56.25vw;         /* 9/16 * vw keeps 16:9 */
-            max-height: 100vh;
-            max-width: calc(100vh * 16 / 9);
-            transform: translate(-50%, -50%);
+            margin: 0;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
-        /* ── Portrait mobile: rotate the landscape canvas -90° to fill screen ── */
+        /* ── Portrait mobile: rotate canvas -90° so landscape game fills portrait screen ── */
         @media screen and (orientation: portrait) {
             canvas.emscripten {
-                width: 100vh;        /* landscape width = portrait viewport height */
-                height: 100vw;       /* landscape height = portrait viewport width */
-                max-height: none;
-                max-width: none;
-                transform: translate(-50%, -50%) rotate(-90deg);
+                width: 100vh !important;
+                height: 100vw !important;
+                top: calc(50% - 50vw) !important;
+                left: calc(50% - 50vh) !important;
+                transform: rotate(-90deg);
+                transform-origin: center center;
             }
         }
 
