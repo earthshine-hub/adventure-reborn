@@ -4,7 +4,7 @@ import pygame
 import sys
 
 # ── Constants ────────────────────────────────────────────────────────────────
-SCREEN_W, SCREEN_H = 640, 360
+SCREEN_W, SCREEN_H = 480, 360
 TILE = 32
 HUD_TOP = 36
 HUD_BOT = 36
