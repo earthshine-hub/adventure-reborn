@@ -4,14 +4,14 @@ import pygame
 import sys
 
 # ── Constants ────────────────────────────────────────────────────────────────
-SCREEN_W, SCREEN_H = 640, 480
+SCREEN_W, SCREEN_H = 640, 360
 TILE = 32
-COLS = SCREEN_W // TILE          # 20
-ROWS = (SCREEN_H - 64) // TILE  # 13  (64px reserved: 32 HUD top + 32 inv bottom)
-HUD_TOP = 32
-HUD_BOT = 32
-PLAY_TOP = HUD_TOP               # y where play area starts
-PLAY_H   = ROWS * TILE           # 416
+HUD_TOP = 36
+HUD_BOT = 36
+COLS = SCREEN_W // TILE                    # 20
+ROWS = (SCREEN_H - HUD_TOP - HUD_BOT) // TILE  # 9  (36 HUD top + 36 inv bottom = 72px)
+PLAY_TOP = HUD_TOP                         # y where play area starts
+PLAY_H   = ROWS * TILE                     # 288
 FPS = 60
 PLAYER_SPEED = 3
 
@@ -1425,24 +1425,33 @@ class DialogueBox:
 
 
 # ── Touch D-pad ───────────────────────────────────────────────────────────────
+def _is_portrait():
+    """Detect if browser is in portrait orientation via JS global set by index.html."""
+    try:
+        import platform as _plt
+        return bool(getattr(_plt.window, 'PORTRAIT_MODE', False))
+    except Exception:
+        return False
+
+
 class TouchDpad:
-    BTN = 64   # larger tap target for mobile fingers
-    GAP = 14   # gap between buttons so they don't overlap
+    BTN = 80   # large tap target — fat-finger friendly
+    GAP = 24   # gap between buttons — no overlap
 
     def __init__(self, font_s):
         self.font_s = font_s
         B  = self.BTN
         G  = self.GAP
-        cx = 90
-        cy = PLAY_TOP + PLAY_H - 90
+        cx = 105
+        cy = PLAY_TOP + PLAY_H - 110
         self.dir_rects = {
             "up":    pygame.Rect(cx - B//2, cy - B - G, B, B),
             "down":  pygame.Rect(cx - B//2, cy + G,     B, B),
             "left":  pygame.Rect(cx - B - G, cy - B//2, B, B),
             "right": pygame.Rect(cx + G,     cy - B//2, B, B),
         }
-        rx = SCREEN_W - 72
-        ry = PLAY_TOP + PLAY_H - 72
+        rx = SCREEN_W - 90
+        ry = PLAY_TOP + PLAY_H - 110
         self.inv_rect  = pygame.Rect(rx - B//2, ry - B//2, B, B)
         self.talk_rect = pygame.Rect(rx - B//2, ry - B//2 - B - G, B, B)
 
@@ -1451,13 +1460,20 @@ class TouchDpad:
         self._inv_tapped  = False
         self._talk_tapped = False
 
+    def _finger_to_game(self, fx, fy):
+        """Convert normalised finger coords to game-pixel coords.
+        In portrait mode the canvas is CSS-rotated -90° so coords need remapping."""
+        if _is_portrait():
+            # rotate(-90deg): visual (vx,vy) → canvas (1-vy)*W, vx*H
+            return int((1.0 - fy) * SCREEN_W), int(fx * SCREEN_H)
+        return int(fx * SCREEN_W), int(fy * SCREEN_H)
+
     def handle_event(self, event):
         self._inv_tapped  = False
         self._talk_tapped = False
 
         if event.type in (pygame.FINGERDOWN, pygame.FINGERMOTION):
-            px = int(event.x * SCREEN_W)
-            py = int(event.y * SCREEN_H)
+            px, py = self._finger_to_game(event.x, event.y)
             for name, rect in self.dir_rects.items():
                 if rect.collidepoint(px, py):
                     self._finger_dirs[event.finger_id] = name
