@@ -692,7 +692,7 @@ class HUD:
             surface.blit(msg, (SCREEN_W // 2 - msg.get_width() // 2, PLAY_TOP + 20))
             self.levelup_timer -= 1
 
-        # ── Bottom bar (inventory strip) ──────────────────────────
+        # ── Bottom bar (inventory strip + tip) ───────────────────
         bot_y = PLAY_TOP + PLAY_H
         pygame.draw.rect(surface, (15, 15, 15), (0, bot_y, SCREEN_W, HUD_BOT))
         slot_size = 28
@@ -704,6 +704,8 @@ class HUD:
             if i < len(player.inventory):
                 item = player.inventory[i]
                 _draw_item_icon(surface, item, sx + slot_size // 2, sy + slot_size // 2, 10)
+        tip = self.font_s.render("WASD: move   I: inventory to use/equip", True, (110, 110, 130))
+        surface.blit(tip, (SCREEN_W // 2 - tip.get_width() // 2, bot_y + (HUD_BOT - tip.get_height()) // 2))
 
 
 
@@ -892,7 +894,7 @@ _FREQS = {
     'G5':783.99,'Ab5':830.61,'A5':880.00,'Bb5':932.33,'B5':987.77,
 }
 
-def _note_buf(freq, dur, sr=11025, vol=0.22):
+def _note_buf(freq, dur, sr=22050, vol=0.22):
     n   = int(sr * dur)
     rel = max(1, min(int(sr * 0.06), n))
     buf = [0.0] * n
@@ -902,7 +904,7 @@ def _note_buf(freq, dur, sr=11025, vol=0.22):
         buf[i] = vol * env * math.sin(2 * math.pi * freq * t)
     return buf
 
-def _thump_buf(freq, dur, sr=11025, vol=0.55):
+def _thump_buf(freq, dur, sr=22050, vol=0.55):
     """Short punchy bass thump with exponential decay and mild 2nd harmonic."""
     n = int(sr * dur)
     buf = [0.0] * n
@@ -919,7 +921,7 @@ def _mix_into(dst, src, pos):
         if idx < len(dst):
             dst[idx] += s
 
-async def make_music_async(sr=11025):
+async def make_music_async(sr=22050):
     """Generate Bach Minuet in G asynchronously — 24 bars."""
     try:
         beat = 0.50
@@ -1013,7 +1015,7 @@ async def make_music_async(sr=11025):
         return None
 
 
-async def make_gameplay_music_async(sr=11025):
+async def make_gameplay_music_async(sr=22050):
     """Generate ominous Space Invaders-style bass thump loop."""
     try:
         # 4 descending bass thumps with rests — slow and menacing
@@ -1050,7 +1052,7 @@ async def make_gameplay_music_async(sr=11025):
         return None
 
 
-async def make_boss_music_async(sr=11025):
+async def make_boss_music_async(sr=22050):
     """Scary, fast, frenetic boss battle music — rapid minor/tritone runs."""
     try:
         beat = 0.09  # very fast (~667 BPM per 16th note)
@@ -1108,7 +1110,7 @@ async def make_boss_music_async(sr=11025):
         return None
 
 
-async def make_victory_music_async(sr=11025):
+async def make_victory_music_async(sr=22050):
     """Soaring triumphant victory fanfare."""
     try:
         beat = 0.28  # exciting, march-like
@@ -1317,7 +1319,7 @@ def _make_chord(freqs, duration=0.18, vol=0.3, sample_rate=22050):
 
 def init_sounds():
     try:
-        pygame.mixer.pre_init(11025, -16, 1, 512)
+        pygame.mixer.pre_init(22050, -16, 1, 512)
         pygame.mixer.init()
     except Exception:
         pass
@@ -1505,11 +1507,12 @@ class TouchDpad:
             if self.talk_rect.collidepoint(event.pos): self._talk_tapped = True
 
         elif event.type == pygame.MOUSEBUTTONUP:
-            self._mouse_dirs.discard(event.button)
-            # clear all on any mouse up for simplicity
-            for name, rect in self.dir_rects.items():
-                if not rect.collidepoint(pygame.mouse.get_pos()):
-                    self._mouse_dirs.discard(name)
+            self._mouse_dirs.clear()
+
+    def reset(self):
+        """Clear all active directions — call when leaving non-gameplay states."""
+        self._finger_dirs.clear()
+        self._mouse_dirs.clear()
 
     @property
     def dx(self):
@@ -1758,6 +1761,8 @@ async def main():
 
                 if event.key == pygame.K_i:
                     state = "inventory" if state == "playing" else "playing"
+                    if state == "playing":
+                        dpad.reset()
 
                 if state == "inventory":
                     if pygame.K_1 <= event.key <= pygame.K_8:
@@ -1791,6 +1796,8 @@ async def main():
             # Touch INV button
             if dpad._inv_tapped:
                 state = "inventory" if state == "playing" else "playing"
+                if state == "playing":
+                    dpad.reset()
             # Touch TALK button
             if dpad._talk_tapped and state == "playing":
                 npc = room_npcs.get(current_room_id)
