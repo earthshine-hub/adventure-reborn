@@ -1426,23 +1426,25 @@ class DialogueBox:
 
 # ── Touch D-pad ───────────────────────────────────────────────────────────────
 class TouchDpad:
-    BTN = 46
+    BTN = 64   # larger tap target for mobile fingers
+    GAP = 14   # gap between buttons so they don't overlap
 
     def __init__(self, font_s):
         self.font_s = font_s
         B  = self.BTN
-        cx = 78
-        cy = PLAY_TOP + PLAY_H - 78
+        G  = self.GAP
+        cx = 90
+        cy = PLAY_TOP + PLAY_H - 90
         self.dir_rects = {
-            "up":    pygame.Rect(cx - B//2, cy - B - 3, B, B),
-            "down":  pygame.Rect(cx - B//2, cy + 3,     B, B),
-            "left":  pygame.Rect(cx - B - 3, cy - B//2, B, B),
-            "right": pygame.Rect(cx + 3,     cy - B//2, B, B),
+            "up":    pygame.Rect(cx - B//2, cy - B - G, B, B),
+            "down":  pygame.Rect(cx - B//2, cy + G,     B, B),
+            "left":  pygame.Rect(cx - B - G, cy - B//2, B, B),
+            "right": pygame.Rect(cx + G,     cy - B//2, B, B),
         }
-        rx = SCREEN_W - 58
-        ry = PLAY_TOP + PLAY_H - 58
+        rx = SCREEN_W - 72
+        ry = PLAY_TOP + PLAY_H - 72
         self.inv_rect  = pygame.Rect(rx - B//2, ry - B//2, B, B)
-        self.talk_rect = pygame.Rect(rx - B//2, ry - B//2 - B - 6, B, B)
+        self.talk_rect = pygame.Rect(rx - B//2, ry - B//2 - B - G, B, B)
 
         self._finger_dirs = {}   # finger_id -> dir name
         self._mouse_dirs  = set()
