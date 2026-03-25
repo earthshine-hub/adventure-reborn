@@ -1176,120 +1176,122 @@ def draw_start_screen(surface, font_xl, font_title, font_s, frame):
     # Sky
     surface.fill((18, 12, 45))
 
-    # Twinkling stars
+    # Scale factor: all original x positions were designed for 640px width
+    sc = SCREEN_W / 640.0
+
+    # Ground sits at 72% of screen height, leaving 28% for title text below
+    GND = int(SCREEN_H * 0.72)   # 259 at 360px height
+
+    # Twinkling stars (above ground)
     rng = random.Random(77)
     for _ in range(90):
         sx = rng.randint(0, SCREEN_W)
-        sy = rng.randint(0, 280)
+        sy = rng.randint(0, GND - 20)
         br = rng.randint(140, 255)
         if (frame // 25 + rng.randint(0, 3)) % 4:
             pygame.draw.circle(surface, (br, br, br), (sx, sy), 1)
 
-    # Crescent moon
-    pygame.draw.circle(surface, (245, 235, 175), (530, 55), 34)
-    pygame.draw.circle(surface, (18, 12, 45),    (545, 45), 28)
+    # Crescent moon (upper-right, scaled)
+    mx = int(SCREEN_W * 0.85)
+    pygame.draw.circle(surface, (245, 235, 175), (mx, 45), 28)
+    pygame.draw.circle(surface, (18, 12, 45),    (mx + 12, 37), 22)
 
     # ── Castle silhouette ─────────────────────────────────────────────────────
-    C    = (16, 10, 30)   # castle dark colour
-    GND  = 310             # ground y
+    C = (16, 10, 30)
 
     def battlements(x, w, y, bw=12, bh=15, gap=4):
         for bx in range(x, x + w, bw + gap):
             pygame.draw.rect(surface, C, (bx, y - bh, min(bw, x + w - bx), bh))
 
-    def window(x, y, w=10, h=16):
+    def window(x, y, w=8, h=13):
         pygame.draw.rect(surface, (12, 8, 22), (x, y, w, h))
-        # warm glow
         pygame.draw.rect(surface, (90, 55, 15), (x+1, y+1, w-2, h-2))
+
+    def sx(v): return int(v * sc)   # scale an x value
 
     # Ground
     pygame.draw.rect(surface, (12, 10, 20), (0, GND, SCREEN_W, SCREEN_H - GND))
 
     # Moat
-    pygame.draw.rect(surface, (18, 28, 80), (SCREEN_W//2 - 110, GND, 220, 12))
+    pygame.draw.rect(surface, (18, 28, 80), (SCREEN_W//2 - sx(110), GND, sx(220), 10))
 
     # Far left small tower
-    pygame.draw.rect(surface, C, (88, GND - 72, 46, 72))
-    battlements(88, 46, GND - 72, 10, 13, 3)
-    window(104, GND - 55)
+    pygame.draw.rect(surface, C, (sx(88), GND - 58, sx(46), 58))
+    battlements(sx(88), sx(46), GND - 58, sx(10), 11, sx(3))
+    window(sx(104), GND - 44)
 
     # Far right small tower
-    pygame.draw.rect(surface, C, (506, GND - 72, 46, 72))
-    battlements(506, 46, GND - 72, 10, 13, 3)
-    window(516, GND - 55)
+    pygame.draw.rect(surface, C, (sx(506), GND - 58, sx(46), 58))
+    battlements(sx(506), sx(46), GND - 58, sx(10), 11, sx(3))
+    window(sx(516), GND - 44)
 
     # Left curtain wall
-    pygame.draw.rect(surface, C, (134, GND - 44, 86, 44))
-    battlements(134, 86, GND - 44, 11, 13, 3)
+    pygame.draw.rect(surface, C, (sx(134), GND - 35, sx(86), 35))
+    battlements(sx(134), sx(86), GND - 35, sx(11), 11, sx(3))
 
     # Right curtain wall
-    pygame.draw.rect(surface, C, (420, GND - 44, 86, 44))
-    battlements(420, 86, GND - 44, 11, 13, 3)
+    pygame.draw.rect(surface, C, (sx(420), GND - 35, sx(86), 35))
+    battlements(sx(420), sx(86), GND - 35, sx(11), 11, sx(3))
 
     # Left tower
-    pygame.draw.rect(surface, C, (164, GND - 105, 68, 105))
-    battlements(164, 68, GND - 105, 12, 15, 3)
-    window(177, GND - 90)
-    window(177, GND - 65)
+    pygame.draw.rect(surface, C, (sx(164), GND - 84, sx(68), 84))
+    battlements(sx(164), sx(68), GND - 84, sx(12), 13, sx(3))
+    window(sx(177), GND - 72)
+    window(sx(177), GND - 52)
 
     # Right tower
-    pygame.draw.rect(surface, C, (408, GND - 105, 68, 105))
-    battlements(408, 68, GND - 105, 12, 15, 3)
-    window(421, GND - 90)
-    window(421, GND - 65)
+    pygame.draw.rect(surface, C, (sx(408), GND - 84, sx(68), 84))
+    battlements(sx(408), sx(68), GND - 84, sx(12), 13, sx(3))
+    window(sx(421), GND - 72)
+    window(sx(421), GND - 52)
 
     # Main keep
-    pygame.draw.rect(surface, C, (256, GND - 148, 128, 148))
-    battlements(256, 128, GND - 148, 14, 18, 4)
-    window(278, GND - 128)
-    window(306, GND - 128)
-    window(278, GND - 100)
-    window(306, GND - 100)
+    pygame.draw.rect(surface, C, (sx(256), GND - 118, sx(128), 118))
+    battlements(sx(256), sx(128), GND - 118, sx(14), 15, sx(4))
+    window(sx(278), GND - 102)
+    window(sx(306), GND - 102)
+    window(sx(278), GND - 78)
+    window(sx(306), GND - 78)
 
     # Gate arch
-    gx, gy = SCREEN_W // 2 - 26, GND - 72
-    pygame.draw.rect(surface, (10, 6, 18), (gx, gy, 52, 72))
-    pygame.draw.circle(surface, (10, 6, 18), (SCREEN_W // 2, gy + 1), 26)
-    # Portcullis bars
-    for bar_x in range(gx + 6, gx + 52, 10):
+    gx, gy = SCREEN_W // 2 - sx(26), GND - 58
+    pygame.draw.rect(surface, (10, 6, 18), (gx, gy, sx(52), 58))
+    pygame.draw.circle(surface, (10, 6, 18), (SCREEN_W // 2, gy + 1), sx(26))
+    for bar_x in range(gx + sx(6), gx + sx(52), sx(10)):
         pygame.draw.line(surface, (30, 20, 50), (bar_x, gy), (bar_x, GND), 2)
-    pygame.draw.line(surface, (30, 20, 50), (gx, gy + 24), (gx + 52, gy + 24), 2)
-    pygame.draw.line(surface, (30, 20, 50), (gx, gy + 48), (gx + 52, gy + 48), 2)
+    pygame.draw.line(surface, (30, 20, 50), (gx, gy + 20), (gx + sx(52), gy + 20), 2)
+    pygame.draw.line(surface, (30, 20, 50), (gx, gy + 40), (gx + sx(52), gy + 40), 2)
 
     # Flag on main keep
     flag_phase = frame * 0.08
     flag_x = SCREEN_W // 2 + 4
-    flag_y = GND - 166
-    pygame.draw.line(surface, (160, 140, 100), (flag_x, flag_y), (flag_x, flag_y - 28), 2)
-    pts = [(flag_x, flag_y - 28),
-           (flag_x + int(18 * math.cos(flag_phase)), flag_y - 20 + int(4 * math.sin(flag_phase))),
-           (flag_x, flag_y - 10)]
+    flag_y = GND - 132
+    pygame.draw.line(surface, (160, 140, 100), (flag_x, flag_y), (flag_x, flag_y - 24), 2)
+    pts = [(flag_x, flag_y - 24),
+           (flag_x + int(16 * math.cos(flag_phase)), flag_y - 17 + int(4 * math.sin(flag_phase))),
+           (flag_x, flag_y - 8)]
     pygame.draw.polygon(surface, RED, pts)
 
-    # ── Title ─────────────────────────────────────────────────────────────────
-    ty = GND + 18
+    # ── Title block (below castle) ────────────────────────────────────────────
+    ty = GND + 10
 
     # Decorative line
-    pygame.draw.line(surface, (120, 100, 40), (60, ty - 4), (SCREEN_W - 60, ty - 4), 1)
+    pygame.draw.line(surface, (120, 100, 40), (30, ty - 2), (SCREEN_W - 30, ty - 2), 1)
 
-    # Title shadow
+    # Title
     sh = font_xl.render("ADVENTURE  REBORN", True, (50, 30, 5))
     surface.blit(sh, (SCREEN_W // 2 - sh.get_width() // 2 + 2, ty + 2))
-    # Title main (gold gradient effect via two passes)
     t1 = font_xl.render("ADVENTURE  REBORN", True, (255, 215, 50))
     surface.blit(t1, (SCREEN_W // 2 - t1.get_width() // 2, ty))
 
     # Subtitle
     sub = font_title.render("A Quest for the Golden Chalice", True, (190, 165, 110))
-    surface.blit(sub, (SCREEN_W // 2 - sub.get_width() // 2, ty + 36))
+    surface.blit(sub, (SCREEN_W // 2 - sub.get_width() // 2, ty + 22))
 
-    # Decorative line
-    pygame.draw.line(surface, (120, 100, 40), (60, ty + 56), (SCREEN_W - 60, ty + 56), 1)
-
-    # Blinking start prompt
+    # Blinking "Press any key to begin"
     if (frame // 28) % 2 == 0:
-        prompt = font_s.render("Press any key  —  or tap  —  to begin", True, (200, 190, 160))
-        surface.blit(prompt, (SCREEN_W // 2 - prompt.get_width() // 2, ty + 68))
+        prompt = font_s.render("Press any key to begin", True, (220, 210, 180))
+        surface.blit(prompt, (SCREEN_W // 2 - prompt.get_width() // 2, ty + 44))
 
 
 # ── Sound ─────────────────────────────────────────────────────────────────────
@@ -1683,6 +1685,7 @@ async def main():
     state = "start"
     frame = 0
     start_input_delay = 0       # frames elapsed on start screen; accept input after 90
+    start_audio_triggered = False  # True after first user gesture (unlocks Web Audio)
     music_sound = None          # start screen music
     music_task = None           # asyncio Future for start music generation
     gameplay_music_sound = None # in-game ominous bass loop
@@ -1710,14 +1713,21 @@ async def main():
             dpad.handle_event(event)
 
             if state == "start":
-                if start_input_delay >= 90:
-                    started = (event.type == pygame.KEYDOWN
-                               or event.type == pygame.MOUSEBUTTONDOWN
-                               or event.type == pygame.FINGERDOWN)
-                    if started:
+                interacted = (event.type == pygame.KEYDOWN
+                              or event.type == pygame.MOUSEBUTTONDOWN
+                              or event.type == pygame.FINGERDOWN)
+                if interacted:
+                    # First interaction unlocks Web Audio — play music immediately
+                    if not start_audio_triggered:
+                        start_audio_triggered = True
+                        if music_sound:
+                            music_sound.set_volume(0.5)
+                            music_sound.play(-1)
+                    # Transition to gameplay only after the input delay
+                    if start_input_delay >= 90:
                         if music_sound: music_sound.stop()
                         state = "playing"
-                        gameplay_music_started = False  # will start on first playing frame
+                        gameplay_music_started = False
                 continue
 
             if state in ("win", "gameover"):
@@ -1814,10 +1824,11 @@ async def main():
                 gameplay_music_task= asyncio.ensure_future(make_gameplay_music_async())
                 boss_music_task    = asyncio.ensure_future(make_boss_music_async())
                 victory_music_task = asyncio.ensure_future(make_victory_music_async())
-            # Start playing start music as soon as it's ready
+            # Load music result when ready
             if music_task.done() and music_sound is None:
                 music_sound = music_task.result()
-                if music_sound:
+                # If user already interacted, play immediately (audio context unlocked)
+                if music_sound and start_audio_triggered:
                     music_sound.set_volume(0.5)
                     music_sound.play(-1)
             # Pre-load other music results as they finish
